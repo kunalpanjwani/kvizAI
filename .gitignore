@@ -137,7 +137,6 @@ uploads/
 public/uploads/
 
 # AI Models
-models/
 *.gguf
 *.bin
 

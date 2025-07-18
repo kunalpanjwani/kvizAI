@@ -160,6 +160,33 @@ The kvizAI application uses SQLAlchemy with async support and SQLite for develop
 - `last_error`: Last error message
 - `is_active`: Whether model is active
 
+### 9. QuizTemplate Model (`quiz_templates` table)
+**Purpose**: Store pre-generated quiz templates and quick quizzes
+
+**Key Fields**:
+- `id`: UUID primary key
+- `name`: Template name
+- `description`: Template description
+- `subject`: Subject category
+- `category`: Template category (general, science, history, etc.)
+- `questions`: JSON field storing pre-generated questions
+- `correct_answers`: JSON field storing correct answer indices
+- `difficulty`: easy, medium, hard
+- `time_limit`: Time limit in minutes
+- `question_count`: Number of questions
+- `max_score`: Maximum possible score
+- `template_type`: quick, daily, weekly, custom
+- `is_active`: Whether template is active
+- `is_featured`: Whether template is featured
+- `times_used`: Number of times used
+- `average_score`: Average score achieved
+- `average_time`: Average time taken
+- `schedule_type`: daily, weekly, monthly (for scheduled quizzes)
+- `next_schedule`: Next scheduled date
+- `last_scheduled`: Last scheduled date
+- `tags`: JSON array of tags
+- `language`: Language code (en, es, fr, etc.)
+
 ## Database Setup
 
 ### Prerequisites
@@ -231,6 +258,9 @@ UserAchievements
 └── Achievement (N:1)
 
 AIModelUsage (standalone)
+
+QuizTemplates (standalone)
+```
 ```
 
 ## Data Types
@@ -295,6 +325,10 @@ The following indexes are automatically created:
 - `leaderboards.user_id`
 - `user_achievements.user_id`
 - `user_achievements.achievement_id`
+- `quiz_templates.subject`
+- `quiz_templates.category`
+- `quiz_templates.template_type`
+- `quiz_templates.is_active`
 
 ## Performance Considerations
 

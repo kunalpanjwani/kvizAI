@@ -39,6 +39,9 @@ venv.bak/
 *.db
 *.sqlite
 *.sqlite3
+DATABASE_COMPLETION_STATUS.md
+DATABASE.md
+*quiz-project-prd-free*
 
 # IDE
 .vscode/

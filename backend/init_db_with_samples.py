@@ -19,7 +19,7 @@ from app.core.config import settings
 
 async def create_sample_quiz_templates():
     """Create sample quiz templates for quick quizzes"""
-    session = AsyncSessionLocal()
+    session = AsyncSessionLocal(bind=engine)
     try:
         
         # Sample quiz templates
@@ -202,9 +202,76 @@ async def create_sample_quiz_templates():
         await session.close()
 
 
+async def create_sample_quizzes():
+    """Create actual quizzes from the quiz templates"""
+    session = AsyncSessionLocal(bind=engine)
+    try:
+        # Get all quiz templates
+        template_result = await session.execute(sa.select(QuizTemplate))
+        templates = template_result.scalars().all()
+        
+        if not templates:
+            print("No quiz templates found to create quizzes from")
+            return
+        
+        # Create a system user if not exists
+        user_result = await session.execute(
+            sa.select(User).where(User.username == "system")
+        )
+        system_user = user_result.scalar_one_or_none()
+        
+        if not system_user:
+            # Create system user
+            from app.utils.auth import get_password_hash
+            system_user = User(
+                username="system",
+                email="system@kvizai.com",
+                password_hash=get_password_hash("system123"),
+                is_active=True,
+                is_verified=True
+            )
+            session.add(system_user)
+            await session.commit()
+            await session.refresh(system_user)
+            print("Created system user")
+        
+        # Create quizzes from templates
+        created_count = 0
+        for template in templates:
+            # Check if quiz already exists
+            existing_quiz_result = await session.execute(
+                sa.select(Quiz).where(Quiz.title == template.name)
+            )
+            if existing_quiz_result.scalar_one_or_none():
+                continue
+            
+            # Create new quiz from template
+            new_quiz = Quiz(
+                title=template.name,
+                description=template.description,
+                subject=template.subject,
+                difficulty=template.difficulty,
+                questions=template.questions,
+                correct_answers=template.correct_answers,
+                max_score=template.max_score,
+                time_limit=template.time_limit,
+                creator_id=system_user.id,
+                is_public=template.is_active,
+                ai_model_used="template"  # Mark as created from template
+            )
+            
+            session.add(new_quiz)
+            created_count += 1
+        
+        await session.commit()
+        print(f"Created {created_count} sample quizzes from templates")
+    finally:
+        await session.close()
+
+
 async def create_sample_achievements():
     """Create sample achievements for users"""
-    session = AsyncSessionLocal()
+    session = AsyncSessionLocal(bind=engine)
     try:
         
         achievements = [
@@ -297,12 +364,15 @@ async def main():
         
         # Create sample data
         await create_sample_quiz_templates()
+        await create_sample_quizzes()
         await create_sample_achievements()
         
         print("Database initialization completed successfully!")
         print("Sample data has been added:")
         print("- 3 Quiz Templates (General Knowledge, Science, History)")
+        print("- 3 Ready-to-use Quizzes (from templates)")
         print("- 5 Achievements (First Quiz, Quiz Master, Perfect Score, Speed Demon, Creator)")
+        print("- System user for quiz ownership")
         print("\nYou can now run the application with: uvicorn main:app --reload")
         
     except Exception as e:
